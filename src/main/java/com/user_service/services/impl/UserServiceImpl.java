@@ -5,6 +5,7 @@ import com.user_service.dto.LoginResponse;
 import com.user_service.dto.UserLoginRequest;
 import com.user_service.dto.UserRegisterRequest;
 import com.user_service.dto.UserResponse;
+import com.user_service.entity.Role;
 import com.user_service.entity.User;
 import com.user_service.exception.InvalidCredentialsException;
 import com.user_service.exception.UserNotFoundException;
@@ -34,6 +35,7 @@ public class UserServiceImpl implements UserService {
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPassword(request.getPassword());
+        user.setRole(Role.USER);
 
         User savedUser = userRepository.save(user);
 
