@@ -11,15 +11,17 @@ import com.user_service.exception.InvalidCredentialsException;
 import com.user_service.exception.UserNotFoundException;
 import com.user_service.repository.UserRepository;
 import com.user_service.services.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService {
 
     private UserRepository userRepository;
     private JwtUtil jwtUtil;
 
-    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil){
+    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
     }
@@ -27,7 +29,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse registerUser(UserRegisterRequest request) {
 
-        if(userRepository.existsByEmail(request.getEmail())){
+        if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Registration failed: Email {} already exists", request.getEmail());
             throw new IllegalArgumentException("Email already registered");
         }
 
@@ -38,6 +41,7 @@ public class UserServiceImpl implements UserService {
         user.setRole(Role.USER);
 
         User savedUser = userRepository.save(user);
+        log.info("User registered successfully with ID: {}", savedUser.getId());
 
         UserResponse userResponse = new UserResponse();
         userResponse.setId(savedUser.getId());
@@ -49,7 +53,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getUserById(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(()-> new UserNotFoundException("User does not exists"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User does not exists"));
         UserResponse userResponse = new UserResponse();
         userResponse.setId(user.getId());
         userResponse.setName(user.getName());
@@ -60,19 +65,32 @@ public class UserServiceImpl implements UserService {
     @Override
     public LoginResponse login(UserLoginRequest userLoginRequest) {
         User user = userRepository.findByEmail(userLoginRequest.getEmail()).orElseThrow(
-                ()->new UserNotFoundException("User not found"));
+                () -> new UserNotFoundException("User not found"));
 
-       if(!user.getPassword().equals(userLoginRequest.getPassword())){
-           throw new InvalidCredentialsException("Invalid email or password");
-       }
+        if (!user.getPassword().equals(userLoginRequest.getPassword())) {
+            log.error("Login failed for email: {} - Invalid password", userLoginRequest.getEmail());
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
 
-       LoginResponse loginResponse = new LoginResponse();
-       loginResponse.setToken(jwtUtil.generateToken(user.getEmail(), user.getRole().name()));
-       return loginResponse;
+        log.info("User {} logged in successfully", userLoginRequest.getEmail());
+
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setToken(jwtUtil.generateToken(user.getEmail(), user.getRole().name()));
+        return loginResponse;
     }
 
     @Override
-    public void UpdateUser(Long userId, UserRegisterRequest request) {
+    public UserResponse UpdateUser(Long userId, UserRegisterRequest request) {
+        User existingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User does not exits."));
 
+        existingUser.setName(request.getName());
+
+        User savedUser = userRepository.save(existingUser);
+        UserResponse userResponse = new UserResponse();
+        userResponse.setId(savedUser.getId());
+        userResponse.setName(savedUser.getName());
+        userResponse.setEmail(savedUser.getEmail());
+        return userResponse;
     }
 }

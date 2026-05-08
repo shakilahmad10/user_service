@@ -1,8 +1,10 @@
 package com.user_service.controller;
 
 
+import com.user_service.dto.UserRegisterRequest;
 import com.user_service.dto.UserResponse;
 import com.user_service.services.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,4 +23,12 @@ public class UserController {
         UserResponse userResponse = userService.getUserById(userId);
         return ResponseEntity.ok(userResponse);
     }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserRegisterRequest request){
+        UserResponse response = userService.UpdateUser(id, request);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
 }

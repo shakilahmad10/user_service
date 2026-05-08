@@ -9,5 +9,5 @@ public interface UserService {
     UserResponse registerUser(UserRegisterRequest request);
     UserResponse getUserById(Long userId);
     LoginResponse login(UserLoginRequest userLoginRequest);
-    void UpdateUser(Long userId, UserRegisterRequest request);
+    UserResponse UpdateUser(Long userId, UserRegisterRequest request);
 }
